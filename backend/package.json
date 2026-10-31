@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "dependencies": {
     "@cap-js/postgres": "^3",
-    "@sap/cds": "^10",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@modelcontextprotocol/server": "^2.4.0",
     "@sap-cloud-sdk/connectivity": "^4",
     "@sap-cloud-sdk/http-client": "^4",
-    "@sap-cloud-sdk/resilience": "^4"
+    "@sap-cloud-sdk/resilience": "^4",
+    "@sap/cds": "^10",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^3"
