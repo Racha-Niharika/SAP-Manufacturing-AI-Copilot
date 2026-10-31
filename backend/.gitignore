@@ -4,6 +4,7 @@ _out/
 gen/
 
 .cdsrc-private.json
+.env
 default-*.json
 *.sqlite
 

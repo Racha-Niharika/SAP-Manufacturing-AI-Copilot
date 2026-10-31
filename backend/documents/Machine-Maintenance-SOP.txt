@@ -1,0 +1,29 @@
+MANUFACTURING STANDARD OPERATING PROCEDURE
+Document ID: SOP-MN-003
+Title: Shop Floor Machine Maintenance & Breakdown Response
+
+1. Purpose
+This procedure defines standard maintenance protocols and emergency breakdown response actions for manufacturing equipment and CNC machines.
+
+2. Planned Preventive Maintenance (PM)
+- Preventive maintenance is executed according to weekly and monthly maintenance schedules.
+- Lubrication, filter cleaning, and calibration must be logged in SAP Plant Maintenance (PM) module.
+- Operating hours and sensor telemetry must be reviewed prior to sign-off.
+
+3. Emergency Breakdown Response
+When an unscheduled machine breakdown occurs:
+- The operator must immediately stop the machine and press the Emergency Stop if safety is compromised.
+- Tag the machine with 'Out of Service' lockout/tagout (LOTO) signage.
+- Create an emergency maintenance notification in SAP PM.
+- Notify the Shift Maintenance Engineer and Production Supervisor within 15 minutes.
+
+4. Production Rerouting
+If estimated repair time exceeds 2 hours:
+- The Production Planner must re-route active production orders to backup or alternative work centers.
+- Tooling and work-in-progress (WIP) materials must be securely transferred and recorded.
+
+5. Return to Service
+Before restarting production after maintenance or repair:
+- Maintenance Engineer must complete safety interlock checks and test run.
+- Quality inspector must inspect the first completed piece (First Article Inspection).
+- Maintenance order must be technically completed (TECO) in SAP PM.

@@ -1,0 +1,31 @@
+MANUFACTURING STANDARD OPERATING PROCEDURE
+Document ID: SOP-MM-001
+Title: Material Shortage Management
+
+1. Purpose
+This procedure explains how to handle raw material shortages during manufacturing.
+
+2. Material Availability Verification
+When a production order cannot proceed because of insufficient raw material:
+- Check current unrestricted stock.
+- Verify the storage location.
+- Check stock in other storage locations.
+- Check whether material is reserved for another order.
+
+3. Shortage Identification
+Calculate material shortage as:
+Material Shortage = Required Quantity - Available Quantity
+
+4. Corrective Actions
+If sufficient stock is unavailable:
+- Inform the production planning team immediately.
+- Check open purchase requisitions for the material.
+- Check existing purchase orders in SAP ERP.
+- Verify expected supplier delivery dates.
+- Contact the procurement and supply chain department to expedite orders.
+
+5. Production Planning & Rescheduling
+Production planning should evaluate whether the production schedule needs to be revised or rescheduled to prevent shop floor downtime. Alternate materials must be authorized by Quality Assurance.
+
+6. Approval Process
+Any procurement action or emergency purchase requisition must follow the company's purchase approval process. Do not create a purchase order without authorization.

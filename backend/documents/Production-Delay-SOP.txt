@@ -1,0 +1,25 @@
+MANUFACTURING STANDARD OPERATING PROCEDURE
+Document ID: SOP-PD-002
+Title: Production Order Delay Escalation & Resolution
+
+1. Purpose
+This standard operating procedure establishes guidelines for identifying, logging, escalating, and resolving production order delays on the shop floor.
+
+2. Delay Identification & Thresholds
+A production order is classified as delayed when:
+- The actual start date exceeds the scheduled start date by more than 4 hours.
+- Operation execution is halted for material shortage, tooling unavailability, or quality hold.
+- The order planned completion date cannot be met based on current yield rates.
+
+3. Escalation Workflow
+- Level 1 (0-4 hours delay): The shop floor supervisor investigates the root cause and logs an incident note.
+- Level 2 (4-12 hours delay): Escalate to the Plant Production Manager. Review resource capacity and reassign labor or machines.
+- Level 3 (> 12 hours delay): Escalate to Supply Chain Operations and notify customer service if customer delivery commitments are impacted.
+
+4. Corrective & Preventive Measures
+- Prioritize delayed orders with higher customer criticality (Order Importance level).
+- Perform split routing or parallel operations where machine capacity permits.
+- Document reasons for delay in SAP order confirmation (scrap, setup delay, machine malfunction).
+
+5. Documentation & Review
+Weekly delay analysis meetings are conducted to review bottleneck operations, supplier delivery lead times, and continuous improvement opportunities.
