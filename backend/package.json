@@ -4,6 +4,7 @@
   "dependencies": {
     "@cap-js/postgres": "^3",
     "@google/genai": "^2.32.0",
+    "@modelcontextprotocol/client": "^2.4.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@modelcontextprotocol/server": "^2.4.0",
     "@sap-cloud-sdk/connectivity": "^4",
