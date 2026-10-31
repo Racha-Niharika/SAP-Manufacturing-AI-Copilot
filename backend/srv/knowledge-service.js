@@ -5,6 +5,7 @@ module.exports = class KnowledgeService extends cds.ApplicationService {
     const { ingestDocuments } = await import("./rag/document-ingestion.mjs");
     const { retrieveKnowledge } = await import("./rag/rag-service.mjs");
     const { askManufacturingAssistant } = await import("./rag/answer-service.mjs");
+    const { runManufacturingAgent } = await import("./agent/agent-service.mjs");
 
     this.on("ingestDocuments", async () => {
       try {
@@ -35,6 +36,17 @@ module.exports = class KnowledgeService extends cds.ApplicationService {
       } catch (err) {
         console.error("Ask assistant error:", err);
         return JSON.stringify({ error: err.message });
+      }
+    });
+
+    this.on("askAgent", async (req) => {
+      const { question } = req.data;
+      try {
+        const result = await runManufacturingAgent(question);
+        return JSON.stringify(result);
+      } catch (error) {
+        console.error("Manufacturing Agent Error:", error);
+        req.error(500, error.message || "Unable to process the agent request.");
       }
     });
 
