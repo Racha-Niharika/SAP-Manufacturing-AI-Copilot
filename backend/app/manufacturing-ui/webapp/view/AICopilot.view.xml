@@ -1,0 +1,104 @@
+<mvc:View
+    controllerName="manufacturingui.controller.AICopilot"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    height="100%">
+
+    <Page id="copilotPage" showHeader="false" showFooter="true" floatingFooter="false" enableScrolling="false" class="copilot-page-wrapper">
+        <content>
+            <VBox height="100%" fitContainer="true" class="copilot-main-vbox">
+
+                <!-- Header Bar -->
+                <HBox class="copilot-header" justifyContent="SpaceBetween" alignItems="Center">
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://da-2" size="1.8rem" color="#ffffff" class="sapUiTinyMarginEnd" />
+                        <VBox>
+                            <HBox alignItems="Center">
+                                <Title text="Manufacturing AI Copilot" level="H3" class="sapUiTinyMarginEnd" />
+                                <ObjectStatus text="Ready" state="Success" icon="sap-icon://sys-enter-2" />
+                            </HBox>
+                            <Text text="Live SAP S/4HANA Cloud &amp; SOP Integration" class="copilot-subtitle" />
+                        </VBox>
+                    </HBox>
+                    <HBox alignItems="Center">
+                        <Button id="btnClearChat" icon="sap-icon://delete" tooltip="Clear Conversation" type="Transparent" press=".onClearChat" class="sapUiTinyMarginEnd" />
+                        <Button id="btnCloseCopilot" icon="sap-icon://decline" tooltip="Close Panel" type="Transparent" press=".onClose" />
+                    </HBox>
+                </HBox>
+
+                <!-- Quick Suggestion Chips Bar -->
+                <VBox class="copilot-suggestions-bar sapUiTinyMarginTopBottom sapUiSmallMarginBeginEnd">
+                    <Text text="💡 Quick Suggestions:" class="copilot-suggestions-label sapUiTinyMarginBottom" />
+                    <HBox wrap="Wrap" class="copilot-chips-wrap">
+                        <Button text="In-progress orders?" type="Ghost" press=".onSuggestionPress" class="copilot-pill" />
+                        <Button text="Aluminium shortage SOP?" type="Ghost" press=".onSuggestionPress" class="copilot-pill" />
+                        <Button text="Delayed orders &amp; actions?" type="Ghost" press=".onSuggestionPress" class="copilot-pill" />
+                        <Button text="Machine breakdown SOP?" type="Ghost" press=".onSuggestionPress" class="copilot-pill" />
+                    </HBox>
+                </VBox>
+
+                <!-- Scrollable Chat Messages Area -->
+                <ScrollContainer id="chatScroll" vertical="true" horizontal="false" class="copilot-chat-container">
+                    <VBox id="chatMessagesBox" items="{chat>/messages}" class="sapUiSmallMargin">
+                        <items>
+                            <VBox class="copilot-message-row {= ${chat>sender} === 'User' ? 'copilot-user-row' : 'copilot-bot-row' }">
+                                <HBox alignItems="Center" class="sapUiTinyMarginBottom {= ${chat>sender} === 'User' ? 'copilot-user-row' : 'copilot-bot-row' }">
+                                    <core:Icon src="{= ${chat>sender} === 'User' ? 'sap-icon://person-placeholder' : 'sap-icon://da-2' }" size="1rem" class="sapUiTinyMarginEnd" />
+                                    <Text text="{chat>sender}" class="sapUiTinyMarginEnd" />
+                                    <Text text="{chat>timestamp}" class="sapUiTinyMarginBegin" />
+                                </HBox>
+
+                                <VBox class="copilot-bubble {= ${chat>sender} === 'User' ? 'copilot-user-bubble' : 'copilot-bot-bubble' }">
+                                    <!-- Tool Execution Badges -->
+                                    <HBox items="{chat>tools}" visible="{= ${chat>sender} !== 'User' &amp;&amp; ${chat>tools}.length > 0 }" class="copilot-tools-bar">
+                                        <items>
+                                            <HBox class="copilot-tool-chip {= ${chat>tool}.indexOf('sop') > -1 ? 'rag-tool' : 'sap-tool' }">
+                                                <core:Icon src="{= ${chat>tool}.indexOf('sop') > -1 ? 'sap-icon://learning-assistant' : 'sap-icon://database' }" size="0.75rem" class="sapUiTinyMarginEnd" />
+                                                <Text text="{chat>tool}" />
+                                                <Text text=" ({chat>status})" class="sapUiTinyMarginBegin" />
+                                            </HBox>
+                                        </items>
+                                    </HBox>
+
+                                    <!-- User text or Formatted Bot Response -->
+                                    <Text text="{chat>text}" visible="{= ${chat>sender} === 'User' }" />
+                                    <core:HTML content="{chat>html}" visible="{= ${chat>sender} !== 'User' }" sanitizeContent="false" />
+                                </VBox>
+                            </VBox>
+                        </items>
+                    </VBox>
+
+                    <!-- Busy Thinking Indicator -->
+                    <HBox id="thinkingBox" visible="{chat>/isThinking}" class="copilot-thinking-box sapUiSmallMargin">
+                        <BusyIndicator size="1.2rem" />
+                        <Text text="Consulting SAP S/4HANA &amp; manufacturing SOPs..." />
+                    </HBox>
+                </ScrollContainer>
+
+            </VBox>
+        </content>
+
+        <!-- Fixed Bottom Footer: Prompt Input Box & Send Button -->
+        <footer>
+            <Toolbar class="copilot-footer-toolbar">
+                <TextArea id="questionInput"
+                    placeholder="Ask your manufacturing question... (e.g. Which orders are delayed?)"
+                    rows="2"
+                    growing="true"
+                    growingMaxLines="4"
+                    width="100%"
+                    value="{chat>/currentInput}"
+                    enabled="{= !${chat>/isThinking} }"
+                    class="sapUiTinyMarginEnd" />
+                <Button id="btnSend"
+                    icon="sap-icon://paper-plane"
+                    type="Emphasized"
+                    tooltip="Send Message"
+                    text="Send"
+                    enabled="{= !${chat>/isThinking} &amp;&amp; ${chat>/currentInput}.trim().length > 0 }"
+                    press=".onSendMessage" />
+            </Toolbar>
+        </footer>
+    </Page>
+</mvc:View>

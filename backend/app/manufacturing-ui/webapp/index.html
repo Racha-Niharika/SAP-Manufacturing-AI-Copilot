@@ -41,6 +41,7 @@
         };
     </script>
 
+    <link rel="stylesheet" type="text/css" href="css/copilot.css" />
     <script id="sap-ushell-bootstrap" src="https://sapui5.hana.ondemand.com/test-resources/sap/ushell/bootstrap/sandbox.js"></script>
     <script id="sap-ui-bootstrap"
         src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js"
@@ -73,7 +74,7 @@
                                 window.location.href = "/";
                             }
                         }
-                    }, true, false);
+                    }, true, true, ["*"]);
 
                     oShellRenderer.addHeaderItem({
                         id: "btnHome",
@@ -82,13 +83,46 @@
                         press: function () {
                             window.location.href = "/";
                         }
-                    }, true, false);
+                    }, true, true, ["*"]);
+
+                    // Add Joule-style AI Copilot button in the Shell Header (Right Side)
+                    if (oShellRenderer.addHeaderEndItem) {
+                        oShellRenderer.addHeaderEndItem({
+                            id: "btnAICopilot",
+                            icon: "sap-icon://da-2",
+                            tooltip: "Manufacturing AI Copilot (Joule)",
+                            text: "AI Copilot",
+                            press: function () {
+                                sap.ui.require(["manufacturingui/controller/AICopilotHelper"], function (Helper) {
+                                    Helper.openCopilotDialog();
+                                });
+                            }
+                        }, true, true, ["*"]);
+                    }
                 }
             }).catch(function (err) {
                 console.warn("Shell header buttons:", err);
             });
         });
+
+        // Initialize Floating AI Copilot Action Button
+        window.addEventListener("DOMContentLoaded", function () {
+            var fab = document.getElementById("jouleCopilotFab");
+            if (fab) {
+                fab.addEventListener("click", function () {
+                    sap.ui.require(["manufacturingui/controller/AICopilotHelper"], function (Helper) {
+                        Helper.openCopilotDialog();
+                    });
+                });
+            }
+        });
     </script>
 </head>
-<body class="sapUiBody sapUiSizeCompact" id="content"></body>
+<body class="sapUiBody sapUiSizeCompact" id="content">
+    <!-- Floating SAP Joule AI Copilot Button -->
+    <div id="jouleCopilotFab" title="Open SAP Manufacturing AI Copilot">
+        <span class="fab-icon">🤖</span>
+        <span>Manufacturing AI Copilot</span>
+    </div>
+</body>
 </html>
