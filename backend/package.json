@@ -1,10 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
     "@cap-js/postgres": "^3",
-    "@sap/cds": "^10"
+    "@sap/cds": "^10",
+    "@sap-cloud-sdk/connectivity": "^4",
+    "@sap-cloud-sdk/http-client": "^4",
+    "@sap-cloud-sdk/resilience": "^4"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^3"
@@ -12,5 +14,21 @@
   "scripts": {
     "start": "cds-serve"
   },
-  "private": true
+  "private": true,
+  "cds": {
+    "requires": {
+      "API_PRODUCTION_ORDER_2_SRV_0001": {
+        "kind": "odata-v2",
+        "model": "srv/external/API_PRODUCTION_ORDER_2_SRV_0001",
+        "csrf": true,
+        "csrfInBatch": true,
+        "[production]": {
+          "credentials": {
+            "destination": "S4HANA_PUBLIC",
+            "path": "sap/opu/odata/sap/API_PRODUCTION_ORDER_2_SRV"
+          }
+        }
+      }
+    }
+  }
 }
