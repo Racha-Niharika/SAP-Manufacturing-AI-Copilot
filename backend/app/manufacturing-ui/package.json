@@ -1,0 +1,14 @@
+{
+  "name": "manufacturing-ui",
+  "version": "0.0.1",
+  "description": "SAP Manufacturing AI Copilot - Fiori Elements UI",
+  "keywords": [
+    "ui5",
+    "sapui5",
+    "fiori-elements"
+  ],
+  "main": "webapp/index.html",
+  "scripts": {
+    "start": "ui5 serve"
+  }
+}

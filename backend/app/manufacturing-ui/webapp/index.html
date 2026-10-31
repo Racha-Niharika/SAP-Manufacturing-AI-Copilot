@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SAP Manufacturing AI Copilot - Production Orders</title>
+
+    <script type="text/javascript">
+        window["sap-ushell-config"] = {
+            defaultRenderer: "fiori2",
+            bootstrapPlugins: {
+                "RuntimeAuthoringPlugin": {
+                    component: "sap.ushell.plugins.rta",
+                    config: {
+                        validateAppVersion: false
+                    }
+                }
+            },
+            renderers: {
+                fiori2: {
+                    componentData: {
+                        config: {
+                            enableSearch: false,
+                            enableNotificationsUI: false,
+                            rootIntent: "manufacturingui-display"
+                        }
+                    }
+                }
+            },
+            applications: {
+                "manufacturingui-display": {
+                    title: "Manufacturing Overview",
+                    description: "Production Orders",
+                    additionalInformation: "SAPUI5.Component=manufacturingui",
+                    applicationType: "URL",
+                    url: "./",
+                    navigationMode: "embedded"
+                }
+            }
+        };
+    </script>
+
+    <script id="sap-ushell-bootstrap" src="https://sapui5.hana.ondemand.com/test-resources/sap/ushell/bootstrap/sandbox.js"></script>
+    <script id="sap-ui-bootstrap"
+        src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js"
+        data-sap-ui-libs="sap.m, sap.ui.core, sap.ushell, sap.fe.templates"
+        data-sap-ui-async="true"
+        data-sap-ui-preload="async"
+        data-sap-ui-theme="sap_horizon"
+        data-sap-ui-compatVersion="edge"
+        data-sap-ui-language="en"
+        data-sap-ui-resourceroots='{ "manufacturingui": "./" }'
+        data-sap-ui-frameOptions="allow"
+        data-sap-ui-flexibilityServices='[{"connector": "LocalStorageConnector"}]'>
+    </script>
+    <script>
+        sap.ui.getCore().attachInit(function () {
+            var oRenderer = sap.ushell.Container.createRenderer("fiori2");
+            oRenderer.placeAt("content");
+
+            // Add Header navigation buttons (Back & Home)
+            sap.ushell.Container.getServiceAsync("Renderer").then(function (oShellRenderer) {
+                if (oShellRenderer && oShellRenderer.addHeaderItem) {
+                    oShellRenderer.addHeaderItem({
+                        id: "btnBackToHome",
+                        icon: "sap-icon://nav-back",
+                        tooltip: "Back to Previous / CAP Home",
+                        press: function () {
+                            if (window.location.hash && window.location.hash.indexOf("ProductionOrders(") > -1) {
+                                window.history.back();
+                            } else {
+                                window.location.href = "/";
+                            }
+                        }
+                    }, true, false);
+
+                    oShellRenderer.addHeaderItem({
+                        id: "btnHome",
+                        icon: "sap-icon://home",
+                        tooltip: "CAP Server Home",
+                        press: function () {
+                            window.location.href = "/";
+                        }
+                    }, true, false);
+                }
+            }).catch(function (err) {
+                console.warn("Shell header buttons:", err);
+            });
+        });
+    </script>
+</head>
+<body class="sapUiBody sapUiSizeCompact" id="content"></body>
+</html>
