@@ -1,30 +1,18 @@
 const cds = require('@sap/cds');
-const { executeHttpRequest } = require('@sap-cloud-sdk/http-client');
 
 /**
  * Reusable client for S/4HANA Cloud Production Order API (API_PRODUCTION_ORDER_2_SRV)
+ * Connects directly using CAP standard cds.connect.to
  */
 async function getProductionOrders(top = 50) {
-    const creds = cds.env.requires.API_PRODUCTION_ORDER_2_SRV_0001?.credentials || {};
-    
-    // Resolve destination (BTP) or direct URL + Basic Auth (Local)
-    const destination = creds.destination ? { destinationName: creds.destination } : {
-        url: creds.url,
-        username: creds.username?.trim(),
-        password: creds.password?.replace(/\$\$/g, '$')
-    };
+    const matdocapi = await cds.connect.to("API_PRODUCTION_ORDER_2_SRV");
+    const { A_ProductionOrder_2 } = matdocapi.entities;
 
-    if (!destination.destinationName && (!destination.username || !destination.password)) {
-        throw new Error('S/4HANA credentials missing in .env');
-    }
+    const raw = await matdocapi.run(
+        SELECT.from(A_ProductionOrder_2).limit(top)
+    );
 
-    const response = await executeHttpRequest(destination, {
-        method: 'get',
-        url: `/A_ProductionOrder_2?$top=${top}&$format=json`
-    });
-
-    const raw = response.data?.d?.results || response.data?.value || [];
-    return raw.map(item => ({
+    return (raw || []).map(item => ({
         orderNumber: item.ManufacturingOrder || item.ProductionOrder || '',
         material: item.Material || '',
         description: item.OrderLongText || `${item.Material || 'Order'} (${item.ManufacturingOrderType || 'Standard'})`,

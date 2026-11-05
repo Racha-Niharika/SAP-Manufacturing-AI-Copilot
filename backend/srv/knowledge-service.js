@@ -46,7 +46,12 @@ module.exports = class KnowledgeService extends cds.ApplicationService {
         return JSON.stringify(result);
       } catch (error) {
         console.error("Manufacturing Agent Error:", error);
-        req.error(500, error.message || "Unable to process the agent request.");
+        let msg = error.message || "Unable to process the agent request.";
+        try {
+          const parsed = JSON.parse(msg);
+          if (parsed.error?.message) msg = parsed.error.message;
+        } catch {}
+        req.error(500, msg);
       }
     });
 

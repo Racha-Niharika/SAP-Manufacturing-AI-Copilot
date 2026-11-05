@@ -4,6 +4,7 @@ const { getProductionOrders } = require('./integrations/s4hana-client');
 module.exports = class ProductionService extends cds.ApplicationService {
     async init() {
         const { ProductionOrders } = this.entities;
+        const matdocapi = await cds.connect.to('API_PRODUCTION_ORDER_2_SRV');
 
         // Auto-sync from S/4HANA on first load if table is empty
         this.before('READ', 'ProductionOrders', async () => {

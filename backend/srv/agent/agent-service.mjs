@@ -13,8 +13,14 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
 });
 
-const MODEL =
-  process.env.GEMINI_GENERATION_MODEL || "gemini-3.5-flash";
+const CANDIDATE_MODELS = Array.from(new Set([
+  process.env.GEMINI_GENERATION_MODEL || "gemini-3.5-flash-lite",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-lite-latest"
+]));
+
+let currentModelIndex = 0;
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -46,6 +52,53 @@ function normalizeToolResult(result) {
       return item;
     })
   };
+}
+
+// Resilient caller with exponential backoff for transient 503/429 spikes + automatic fallback models
+async function callGeminiWithRetry(params, maxRetries = 3) {
+  let delay = 1500;
+
+  for (let modelIdx = currentModelIndex; modelIdx < CANDIDATE_MODELS.length; modelIdx++) {
+    const activeModel = CANDIDATE_MODELS[modelIdx];
+    params.model = activeModel;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await ai.models.generateContent(params);
+      } catch (err) {
+        const isDailyQuota =
+          err.message?.includes("requests per day") ||
+          err.message?.includes("GenerateRequestsPerDay");
+
+        if (isDailyQuota) {
+          console.warn(`⚠️ Daily quota exhausted for model ${activeModel}. Switching to fallback model...`);
+          currentModelIndex = Math.min(modelIdx + 1, CANDIDATE_MODELS.length - 1);
+          break; // Try next candidate model
+        }
+
+        const isTransient =
+          err.status === 503 ||
+          err.status === 429 ||
+          err.message?.includes("503") ||
+          err.message?.includes("high demand") ||
+          err.message?.includes("UNAVAILABLE");
+
+        if (isTransient && attempt < maxRetries) {
+          console.warn(`⚠️ Gemini API temporary load spike (${err.status || 503}). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2;
+          continue;
+        }
+
+        if (attempt === maxRetries && modelIdx < CANDIDATE_MODELS.length - 1) {
+          console.warn(`⚠️ Model ${activeModel} unavailable after ${maxRetries} attempts. Trying fallback model...`);
+          break;
+        }
+
+        throw err;
+      }
+    }
+  }
 }
 
 export async function runManufacturingAgent(question) {
@@ -151,8 +204,8 @@ Instructions:
       }
     ];
 
-    let response = await ai.models.generateContent({
-      model: MODEL,
+    let response = await callGeminiWithRetry({
+      model: CANDIDATE_MODELS[currentModelIndex],
       contents,
       config: {
         systemInstruction,
@@ -267,8 +320,8 @@ Instructions:
         parts: functionResponseParts
       });
 
-      response = await ai.models.generateContent({
-        model: MODEL,
+      response = await callGeminiWithRetry({
+        model: CANDIDATE_MODELS[currentModelIndex],
         contents,
         config: {
           systemInstruction,

@@ -2,24 +2,25 @@
   "name": "backend",
   "version": "1.0.0",
   "dependencies": {
-    "@cap-js/postgres": "^3",
+    "@cap-js/postgres": "^1",
     "@google/genai": "^2.32.0",
     "@modelcontextprotocol/client": "^2.4.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@modelcontextprotocol/server": "^2.4.0",
     "@sap-cloud-sdk/connectivity": "^4",
-    "@sap-cloud-sdk/http-client": "^4",
+    "@sap-cloud-sdk/http-client": "^4.9.1",
     "@sap-cloud-sdk/resilience": "^4",
-    "@sap/cds": "^10",
+    "@sap/cds": "^8.9.10",
     "dotenv": "^18.0.9",
     "pg": "^8.23.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cap-js/sqlite": "^3"
+    "@cap-js/sqlite": "^1"
   },
   "scripts": {
-    "start": "cds-serve"
+    "start": "cds-serve",
+    "ingest": "node srv/rag/ingest.mjs"
   },
   "private": true,
   "cds": {
@@ -27,6 +28,18 @@
       "API_PRODUCTION_ORDER_2_SRV_0001": {
         "kind": "odata-v2",
         "model": "srv/external/API_PRODUCTION_ORDER_2_SRV_0001",
+        "csrf": true,
+        "csrfInBatch": true,
+        "[production]": {
+          "credentials": {
+            "destination": "S4HANA_PUBLIC",
+            "path": "sap/opu/odata/sap/API_PRODUCTION_ORDER_2_SRV"
+          }
+        }
+      },
+      "API_PRODUCTION_ORDER_2_SRV": {
+        "kind": "odata-v2",
+        "model": "srv/external/API_PRODUCTION_ORDER_2_SRV",
         "csrf": true,
         "csrfInBatch": true,
         "[production]": {
