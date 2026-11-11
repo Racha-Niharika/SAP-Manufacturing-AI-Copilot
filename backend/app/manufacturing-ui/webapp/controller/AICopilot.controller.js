@@ -183,6 +183,7 @@ sap.ui.define([
 
                 var sAnswer = result.answer || "No response received.";
                 var aTools = result.toolsExecuted || [];
+                var oPendingAction = result.pendingAction || null;
                 var sHtml = this._formatMarkdown(sAnswer);
 
                 aMessages = (oModel.getProperty("/messages") || []).slice();
@@ -191,7 +192,8 @@ sap.ui.define([
                     timestamp: this._getTimeString(),
                     text: sAnswer,
                     html: sHtml,
-                    tools: aTools
+                    tools: aTools,
+                    pendingAction: oPendingAction
                 });
 
                 oModel.setProperty("/messages", aMessages);
@@ -312,6 +314,9 @@ sap.ui.define([
                                     sContent = "<div class='copilot-html-root'>" + sContent + "</div>";
                                 }
                                 m.html = sContent;
+                                if (m.pendingAction && m.pendingAction.busy) {
+                                    m.pendingAction.busy = false;
+                                }
                             }
                             return m;
                         });
@@ -517,6 +522,157 @@ sap.ui.define([
                 console.error("Failed to navigate to order:", err);
                 MessageToast.show("Unable to navigate to Production Order " + sOrderNumber);
             }
+        },
+
+        onConfirmAction: async function (oEvent) {
+            var oCtx = oEvent.getSource().getBindingContext("chat");
+            if (!oCtx) {
+                return;
+            }
+
+            var sPath = oCtx.getPath();
+            var oModel = oCtx.getModel();
+            var oAction = oModel.getProperty(sPath + "/pendingAction");
+            if (!oAction || oAction.status !== "pending" || oAction.busy) {
+                return;
+            }
+
+            oModel.setProperty(sPath + "/pendingAction/busy", true);
+            oModel.refresh(true);
+
+            try {
+                var response = await fetch("/odata/v4/knowledge/confirmAgentAction", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        tool: oAction.tool,
+                        arguments: JSON.stringify(oAction.arguments || {})
+                    })
+                });
+
+                if (!response.ok) {
+                    var errorText = await response.text();
+                    throw new Error(errorText || ("HTTP " + response.status));
+                }
+
+                var data = await response.json();
+                var parsed = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
+
+                if (!parsed || parsed.status === "ERROR") {
+                    throw new Error((parsed && parsed.message) || "Confirmed action failed.");
+                }
+
+                var sSummary = this._formatConfirmedActionSummary(oAction.tool, parsed.result || {});
+                var oUpdatedAction = Object.assign({}, oAction, {
+                    status: "confirmed",
+                    busy: false,
+                    resolutionText: sSummary
+                });
+                oModel.setProperty(sPath + "/pendingAction", oUpdatedAction);
+
+                var aMessages = (oModel.getProperty("/messages") || []).slice();
+                aMessages.push({
+                    sender: "Manufacturing AI Copilot",
+                    timestamp: this._getTimeString(),
+                    text: sSummary,
+                    html: this._formatMarkdown("✅ **Confirmed & Executed:** " + sSummary),
+                    tools: [{ tool: oAction.tool, status: "success" }],
+                    pendingAction: null
+                });
+
+                oModel.setProperty("/messages", aMessages);
+                oModel.refresh(true);
+                this._persistChat(aMessages);
+                this._scrollToBottom();
+                MessageToast.show("Action executed successfully.");
+
+                try {
+                    var oComponent = this.getOwnerComponent();
+                    if (oComponent && oComponent.getModel()) {
+                        oComponent.getModel().refresh();
+                    }
+                } catch (e) {}
+
+            } catch (err) {
+                console.error("Confirmed action execution failed:", err);
+                var oFailedAction = Object.assign({}, oAction, {
+                    status: "failed",
+                    busy: false,
+                    resolutionText: "Execution failed: " + err.message
+                });
+                oModel.setProperty(sPath + "/pendingAction", oFailedAction);
+
+                var aErrMessages = (oModel.getProperty("/messages") || []).slice();
+                aErrMessages.push({
+                    sender: "Manufacturing AI Copilot",
+                    timestamp: this._getTimeString(),
+                    text: "Action failed: " + err.message,
+                    html: "<div class='copilot-error-banner'>⚠️ <strong>Action Failed:</strong> " + this._escapeHtml(err.message) + "</div>",
+                    tools: [{ tool: oAction.tool, status: "failed" }],
+                    pendingAction: null
+                });
+
+                oModel.setProperty("/messages", aErrMessages);
+                oModel.refresh(true);
+                this._persistChat(aErrMessages);
+                this._scrollToBottom();
+            }
+        },
+
+        onCancelAction: function (oEvent) {
+            var oCtx = oEvent.getSource().getBindingContext("chat");
+            if (!oCtx) {
+                return;
+            }
+
+            var sPath = oCtx.getPath();
+            var oModel = oCtx.getModel();
+            var oAction = oModel.getProperty(sPath + "/pendingAction");
+            if (!oAction || oAction.status !== "pending" || oAction.busy) {
+                return;
+            }
+
+            var sCancelMsg = "Cancelled: " + oAction.message + " No changes were written.";
+            var oCancelled = Object.assign({}, oAction, {
+                status: "cancelled",
+                busy: false,
+                resolutionText: "Cancelled by operator. No changes applied."
+            });
+            oModel.setProperty(sPath + "/pendingAction", oCancelled);
+
+            var aMessages = (oModel.getProperty("/messages") || []).slice();
+            aMessages.push({
+                sender: "Manufacturing AI Copilot",
+                timestamp: this._getTimeString(),
+                text: sCancelMsg,
+                html: this._formatMarkdown("❌ **Cancelled:** " + oAction.message + " No changes were made."),
+                tools: [],
+                pendingAction: null
+            });
+
+            oModel.setProperty("/messages", aMessages);
+            oModel.refresh(true);
+            this._persistChat(aMessages);
+            this._scrollToBottom();
+            MessageToast.show("Action cancelled.");
+        },
+
+        _formatConfirmedActionSummary: function (sTool, oResult) {
+            if (sTool === "teco_production_order") {
+                return "Order " + (oResult.orderNumber || "") + " has been set to TECO in SAP S/4HANA.";
+            }
+            if (sTool === "release_production_order") {
+                return "Order " + (oResult.orderNumber || "") + " has been released in SAP S/4HANA.";
+            }
+            if (sTool === "create_maintenance_notification") {
+                return "Maintenance Notification " + (oResult.notificationNumber || "") +
+                    " created in CAP DB (Priority: " + (oResult.priority || "Medium") +
+                    (oResult.orderNumber ? ", Order: " + oResult.orderNumber : "") + ").";
+            }
+            return "Action completed successfully.";
         }
     });
 });

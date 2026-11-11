@@ -84,13 +84,57 @@
                                         <HBox class="copilot-tool-chip {= ${chat>tool}.indexOf('sop') &gt; -1 ? 'rag-tool' : 'sap-tool' }">
                                             <core:Icon src="{= ${chat>tool}.indexOf('sop') &gt; -1 ? 'sap-icon://learning-assistant' : 'sap-icon://database' }" size="0.75rem" class="sapUiTinyMarginEnd" />
                                             <Text text="{chat>tool}" class="tool-name" />
-                                            <Text text=" ({chat>status})" class="tool-status {= ${chat>status} === 'success' ? 'status-ok' : 'status-err' } sapUiTinyMarginBegin" />
+                                            <Text text=" ({chat>status})" class="tool-status {= ${chat>status} === 'success' ? 'status-ok' : (${chat>status} === 'awaiting_confirmation' ? 'status-pending' : 'status-err') } sapUiTinyMarginBegin" />
                                         </HBox>
                                     </items>
                                 </HBox>
 
                                 <!-- Formatted Bot HTML Answer -->
                                 <core:HTML content="{chat>html}" preferDOM="false" sanitizeContent="false" class="copilot-bot-html" />
+
+                                <!-- Human-in-the-Loop (HITL) Confirmation Card -->
+                                <VBox visible="{= Boolean(${chat>pendingAction}) }" class="copilot-confirm-card">
+                                    <HBox alignItems="Center" justifyContent="SpaceBetween" class="copilot-confirm-header">
+                                        <HBox alignItems="Center">
+                                            <core:Icon src="sap-icon://validate" class="copilot-confirm-icon sapUiTinyMarginEnd" />
+                                            <Text text="{chat>pendingAction/title}" class="copilot-confirm-title" />
+                                        </HBox>
+                                        <Text text="{chat>pendingAction/targetSystem}" class="copilot-confirm-system-badge" />
+                                    </HBox>
+                                    <Text text="{chat>pendingAction/message}" class="copilot-confirm-message" />
+                                    <HBox
+                                        visible="{= ${chat>pendingAction/status} === 'pending' }"
+                                        alignItems="Center"
+                                        class="copilot-confirm-actions">
+                                        <Button
+                                            text="Confirm"
+                                            type="Emphasized"
+                                            icon="sap-icon://accept"
+                                            enabled="{= !${chat>pendingAction/busy} }"
+                                            press=".onConfirmAction"
+                                            class="copilot-confirm-btn-ok sapUiTinyMarginEnd" />
+                                        <Button
+                                            text="Cancel"
+                                            type="Transparent"
+                                            icon="sap-icon://decline"
+                                            enabled="{= !${chat>pendingAction/busy} }"
+                                            press=".onCancelAction"
+                                            class="copilot-confirm-btn-cancel" />
+                                        <BusyIndicator
+                                            visible="{= Boolean(${chat>pendingAction/busy}) }"
+                                            size="1rem"
+                                            class="sapUiSmallMarginBegin" />
+                                    </HBox>
+                                    <HBox
+                                        visible="{= ${chat>pendingAction/status} !== 'pending' }"
+                                        alignItems="Center"
+                                        class="copilot-confirm-resolved">
+                                        <core:Icon
+                                            src="{= ${chat>pendingAction/status} === 'confirmed' ? 'sap-icon://sys-enter-2' : (${chat>pendingAction/status} === 'failed' ? 'sap-icon://error' : 'sap-icon://sys-cancel-2') }"
+                                            class="sapUiTinyMarginEnd" />
+                                        <Text text="{chat>pendingAction/resolutionText}" class="copilot-confirm-status-text" />
+                                    </HBox>
+                                </VBox>
                             </VBox>
                         </VBox>
 

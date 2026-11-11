@@ -1,6 +1,75 @@
 const BASE_URL = process.env.CAP_API_URL || "http://localhost:4004";
 const CAP_URL = BASE_URL.includes("/production") ? BASE_URL : `${BASE_URL.replace(/\/+$/, "")}/production`;
 
+function validateOrderNumber(orderNumber, required = true) {
+    const clean = String(orderNumber || "").trim();
+    if (!clean) {
+        if (required) throw new Error("Production order number is required");
+        return "";
+    }
+    if (!/^[A-Za-z0-9_-]{1,20}$/.test(clean)) {
+        throw new Error("Invalid production order number");
+    }
+    return clean;
+}
+
+async function callCapAction(actionName, payload = {}) {
+    const url = `${CAP_URL}/${actionName}`;
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(30000)
+    });
+
+    if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`CAP action ${actionName} failed (${response.status}): ${body}`);
+    }
+
+    const raw = await response.json();
+    const parsed = typeof raw?.value === "string" ? JSON.parse(raw.value) : raw;
+    if (parsed?.status === "ERROR") {
+        throw new Error(parsed.message || `SAP/CAP action ${actionName} failed`);
+    }
+    return parsed;
+}
+
+export async function releaseProductionOrder(orderNumber) {
+    const cleanOrder = validateOrderNumber(orderNumber, true);
+    return callCapAction("releaseOrder", { orderNumber: cleanOrder });
+}
+
+export async function tecoProductionOrder(orderNumber) {
+    const cleanOrder = validateOrderNumber(orderNumber, true);
+    return callCapAction("tecoOrder", { orderNumber: cleanOrder });
+}
+
+export async function createMaintenanceNotification({
+    orderNumber = "",
+    equipment = "",
+    title,
+    description,
+    priority = "Medium"
+}) {
+    const cleanOrder = validateOrderNumber(orderNumber, false);
+    const cleanTitle = String(title || "").trim();
+    const cleanDescription = String(description || "").trim();
+    if (!cleanTitle || !cleanDescription) {
+        throw new Error("Both title and description are required to create a maintenance notification");
+    }
+    return callCapAction("createMaintenanceNotification", {
+        orderNumber: cleanOrder,
+        equipment: String(equipment || "").trim(),
+        title: cleanTitle,
+        description: cleanDescription,
+        priority: String(priority || "Medium").trim()
+    });
+}
+
 async function callCAP(path = "") {
     const url = `${CAP_URL}/ProductionOrders${path}`;
     const response = await fetch(url, {

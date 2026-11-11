@@ -5,7 +5,7 @@ module.exports = class KnowledgeService extends cds.ApplicationService {
     const { ingestDocuments } = await import("./rag/document-ingestion.mjs");
     const { retrieveKnowledge } = await import("./rag/rag-service.mjs");
     const { askManufacturingAssistant } = await import("./rag/answer-service.mjs");
-    const { runManufacturingAgent } = await import("./agent/agent-service.mjs");
+    const { runManufacturingAgent, executeConfirmedAgentTool } = await import("./agent/agent-service.mjs");
 
     this.on("ingestDocuments", async () => {
       try {
@@ -52,6 +52,21 @@ module.exports = class KnowledgeService extends cds.ApplicationService {
           if (parsed.error?.message) msg = parsed.error.message;
         } catch {}
         req.error(500, msg);
+      }
+    });
+
+    this.on("confirmAgentAction", async (req) => {
+      const { tool, arguments: rawArgs } = req.data || {};
+      try {
+        const result = await executeConfirmedAgentTool(tool, rawArgs);
+        return JSON.stringify(result);
+      } catch (error) {
+        console.error("Confirmed Agent Action Error:", error);
+        return JSON.stringify({
+          status: "ERROR",
+          tool: tool || "",
+          message: error.message
+        });
       }
     });
 

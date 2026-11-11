@@ -29,12 +29,110 @@ const serverPath = path.resolve(
   "../mcp/server.mjs"
 );
 
-// Only allow read-only tools in this first agent version.
-const ALLOWED_MCP_TOOLS = new Set([
+const READ_MCP_TOOLS = new Set([
   "get_production_orders",
   "get_production_order_details",
   "get_delayed_production_orders"
 ]);
+
+const WRITE_MCP_TOOLS = new Set([
+  "release_production_order",
+  "teco_production_order",
+  "create_maintenance_notification"
+]);
+
+const ALLOWED_MCP_TOOLS = new Set([...READ_MCP_TOOLS, ...WRITE_MCP_TOOLS]);
+
+/** Run an async callback against a connected STDIO MCP client. */
+async function withMcpClient(fn) {
+  const client = new Client({
+    name: "sap-manufacturing-ai-agent",
+    version: "1.0.0"
+  });
+
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: [serverPath],
+    cwd: path.resolve(currentDir, "../.."),
+    env: {
+      ...process.env,
+      CAP_API_URL: process.env.CAP_API_URL || `http://localhost:${process.env.PORT || 4004}`
+    }
+  });
+
+  try {
+    await client.connect(transport);
+    return await fn(client);
+  } finally {
+    await client.close();
+  }
+}
+
+/** Validate write tool arguments and construct an interactive HITL confirmation payload. */
+function buildPendingAction(toolName, args = {}) {
+  const orderNumber = String(args.orderNumber || "").trim();
+  const id = `hitl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const validateRequiredOrder = () => {
+    if (!/^[A-Za-z0-9_-]{1,20}$/.test(orderNumber)) {
+      throw new Error(`A valid production order number is required for ${toolName}.`);
+    }
+  };
+
+  if (toolName === "teco_production_order") {
+    validateRequiredOrder();
+    return {
+      id,
+      tool: toolName,
+      arguments: { orderNumber },
+      title: "Confirm SAP S/4HANA TECO Action",
+      message: `Would you like me to set Order ${orderNumber} to TECO in SAP S/4HANA?`,
+      targetSystem: "SAP S/4HANA",
+      status: "pending"
+    };
+  }
+
+  if (toolName === "release_production_order") {
+    validateRequiredOrder();
+    return {
+      id,
+      tool: toolName,
+      arguments: { orderNumber },
+      title: "Confirm SAP S/4HANA Release Action",
+      message: `Would you like me to release Order ${orderNumber} in SAP S/4HANA?`,
+      targetSystem: "SAP S/4HANA",
+      status: "pending"
+    };
+  }
+
+  if (toolName === "create_maintenance_notification") {
+    const title = String(args.title || "").trim();
+    const description = String(args.description || "").trim();
+    if (!title || !description) {
+      throw new Error("Both title and description are required to create a maintenance notification.");
+    }
+    const equipment = String(args.equipment || "").trim();
+    const priority = ["Low", "Medium", "High", "Critical"].includes(args.priority)
+      ? args.priority
+      : "Medium";
+    const scope = orderNumber
+      ? ` for Order ${orderNumber}`
+      : equipment
+        ? ` for Equipment ${equipment}`
+        : "";
+    return {
+      id,
+      tool: toolName,
+      arguments: { orderNumber, equipment, title, description, priority },
+      title: "Confirm Maintenance Notification Creation",
+      message: `Would you like me to create a ${priority}-priority Maintenance Notification ("${title}"${scope}) in CAP DB?`,
+      targetSystem: "CAP Manufacturing DB",
+      status: "pending"
+    };
+  }
+
+  throw new Error(`Unsupported HITL write tool: ${toolName}`);
+}
 
 // Convert MCP tool results into JSON that Gemini can understand.
 function normalizeToolResult(result) {
@@ -107,23 +205,9 @@ export async function runManufacturingAgent(question, rawHistory = []) {
     throw new Error("Question is required");
   }
 
-  const client = new Client({
-    name: "sap-manufacturing-ai-agent",
-    version: "1.0.0"
-  });
+  return withMcpClient(async (client) => {
 
-  const transport = new StdioClientTransport({
-    command: process.execPath,
-    args: [serverPath],
-    cwd: path.resolve(currentDir, "../..")
-  });
-
-  try {
-
-    // 1. Connect to the existing MCP server.
-    await client.connect(transport);
-
-    // 2. Discover tools dynamically.
+    // 1 & 2. Discover tools dynamically from connected MCP server.
     const mcpResponse = await client.listTools();
 
     const mcpTools = mcpResponse.tools.filter(tool =>
@@ -191,8 +275,9 @@ Instructions:
 - Clearly distinguish SAP facts from SOP recommendations.
 - Cite SOP sources using their document names.
 - If information is unavailable, say so.
-- Do not perform any SAP write operations.
-- Never claim to have created or changed anything in SAP.
+- Write actions (release_production_order, teco_production_order, create_maintenance_notification) require explicit Human-in-the-Loop (HITL) approval.
+- Whenever the user asks to release an order, set an order to TECO, or create a maintenance notification, invoke the corresponding write tool so the UI displays an interactive [Confirm] / [Cancel] card.
+- Never claim to have executed or completed any SAP/CAP write operation during askAgent. When a write tool returns AWAITING_HUMAN_CONFIRMATION, ask the user to click Confirm or Cancel in the confirmation card.
 - Prefer concise, well-structured answers.
 - If there are more than 10 production orders, show only the top 10 key orders in the table and summarize the total remaining count.
 - Never generate an unnecessarily large table.
@@ -275,6 +360,7 @@ Instructions:
     });
 
     const executionLog = [];
+    let pendingAction = null;
 
     // 6. Execute tool calls and send their results back to Gemini.
     const MAX_TOOL_ROUNDS = 5;
@@ -314,10 +400,14 @@ Instructions:
             }
 
             toolResult = await retrieveKnowledge(args.question);
+            executionLog.push({
+              tool: call.name,
+              status: "success"
+            });
 
           }
 
-          // Execute an existing MCP tool.
+          // Handle MCP tools (read tools run immediately; write tools pause for HITL confirmation).
           else if (ALLOWED_MCP_TOOLS.has(call.name)) {
 
             const matchingTool = mcpTools.find(
@@ -328,23 +418,38 @@ Instructions:
               throw new Error("MCP tool is not available");
             }
 
-            toolResult = await client.callTool({
-              name: call.name,
-              arguments: args
-            });
-
-            toolResult = normalizeToolResult(toolResult);
+            if (WRITE_MCP_TOOLS.has(call.name)) {
+              const candidateAction = buildPendingAction(call.name, args);
+              if (!pendingAction) {
+                pendingAction = candidateAction;
+              }
+              toolResult = {
+                status: "AWAITING_HUMAN_CONFIRMATION",
+                confirmationRequired: true,
+                promptToShowUser: candidateAction.message,
+                note: "This write operation has NOT run yet. Tell the user to click Confirm or Cancel on the confirmation card below, and do not claim the change is already applied."
+              };
+              executionLog.push({
+                tool: call.name,
+                status: "awaiting_confirmation"
+              });
+            } else {
+              toolResult = await client.callTool({
+                name: call.name,
+                arguments: args
+              });
+              toolResult = normalizeToolResult(toolResult);
+              executionLog.push({
+                tool: call.name,
+                status: toolResult.isError ? "failed" : "success"
+              });
+            }
 
           }
 
           else {
             throw new Error("Tool is not permitted: " + call.name);
           }
-
-          executionLog.push({
-            tool: call.name,
-            status: "success"
-          });
 
         } catch (error) {
 
@@ -402,12 +507,56 @@ Instructions:
     return {
       question,
       answer,
-      toolsExecuted: executionLog
+      toolsExecuted: executionLog,
+      pendingAction
     };
 
-  } finally {
+  });
+}
 
-    await client.close();
-
+/** Execute a previously proposed HITL write tool over MCP only after explicit user confirmation. */
+export async function executeConfirmedAgentTool(toolName, rawArguments = {}) {
+  if (!WRITE_MCP_TOOLS.has(toolName)) {
+    throw new Error(`Tool "${toolName}" is not a permitted HITL write action.`);
   }
+
+  let parsedArgs = rawArguments;
+  if (typeof rawArguments === "string") {
+    try {
+      parsedArgs = JSON.parse(rawArguments || "{}");
+    } catch {
+      throw new Error("Invalid JSON arguments for confirmed action.");
+    }
+  }
+
+  // Validate tool arguments cleanly before invoking the MCP server.
+  const validated = buildPendingAction(toolName, parsedArgs || {});
+
+  return withMcpClient(async (client) => {
+    const mcpResponse = await client.listTools();
+    const matchingTool = mcpResponse.tools.find(tool => tool.name === toolName);
+    if (!matchingTool) {
+      throw new Error(`MCP write tool "${toolName}" is not registered.`);
+    }
+
+    const rawResult = await client.callTool({
+      name: toolName,
+      arguments: validated.arguments
+    });
+    const normalized = normalizeToolResult(rawResult);
+    const payload = normalized.content?.[0] ?? null;
+
+    if (normalized.isError || payload?.status === "ERROR") {
+      const errMsg =
+        payload?.message ||
+        (typeof payload === "string" ? payload : `MCP write tool "${toolName}" failed.`);
+      throw new Error(errMsg);
+    }
+
+    return {
+      status: "SUCCESS",
+      tool: toolName,
+      result: payload
+    };
+  });
 }

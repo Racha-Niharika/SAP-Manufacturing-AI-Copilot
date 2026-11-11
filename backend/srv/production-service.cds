@@ -3,7 +3,17 @@ using { manufacturing } from '../db/schema';
 service ProductionService @(path: '/production') {
   @odata.draft.enabled: false
   entity ProductionOrders as projection on manufacturing.ProductionOrders;
+  entity MaintenanceNotifications as projection on manufacturing.MaintenanceNotifications;
   action fetchFromS4() returns LargeString;
+  action releaseOrder(orderNumber : String) returns LargeString;
+  action tecoOrder(orderNumber : String) returns LargeString;
+  action createMaintenanceNotification(
+    orderNumber : String,
+    equipment   : String,
+    title       : String,
+    description : String,
+    priority    : String
+  ) returns LargeString;
 }
 
 annotate ProductionService.ProductionOrders with @(
