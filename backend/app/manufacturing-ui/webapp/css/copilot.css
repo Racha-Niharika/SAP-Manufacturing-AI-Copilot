@@ -1,169 +1,102 @@
-/* SAP Manufacturing AI Copilot Styles */
+/* SAP Manufacturing AI Copilot - Conversational Q&A Styles */
 
 /* =========================================================
-   1. Joule-style Right-Docked Drawer & Resize Handle
+   1. Centered Dialog Structure (Fits Screen Perfectly)
    ========================================================= */
-.copilot-dialog {
-    position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: auto !important;
-    margin: 0 !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    width: 620px !important;
-    max-width: 95vw !important;
-    border-radius: 16px 0 0 16px !important;
-    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.24) !important;
-    transform: none !important;
+.copilot-dialog.sapMDialog {
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.32), 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
     overflow: hidden !important;
-    z-index: 100000 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    transition: width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-    animation: slideInRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 64px) !important;
+    box-sizing: border-box !important;
 }
 
 /* Force clean full-height flex column down through all UI5 dialog wrappers */
-.copilot-dialog > .sapMDialogSection,
+.copilot-dialog .sapMDialogSection,
 .copilot-dialog .sapMDialogScroll,
 .copilot-dialog .sapMDialogScrollCont,
-.copilot-view-root,
-.copilot-main-vbox {
+.copilot-dialog .copilot-view-root,
+.copilot-dialog .copilot-main-vbox {
     height: 100% !important;
     max-height: 100% !important;
     min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    flex: 1 1 100% !important;
+    overflow: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
-    overflow: hidden !important;
     box-sizing: border-box !important;
+    background-color: transparent !important;
 }
 
 /* Maximized Mode */
-.copilot-dialog-maximized {
-    width: 88vw !important;
+.copilot-dialog-maximized.sapMDialog {
+    width: 94vw !important;
     max-width: 1400px !important;
-}
-
-/* Draggable Left Resize Handle */
-.copilot-resize-handle {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 8px !important;
-    height: 100% !important;
-    cursor: ew-resize !important;
-    z-index: 999999 !important;
-    background: transparent !important;
-    transition: background 0.15s ease !important;
-}
-
-.copilot-resize-handle:hover,
-.copilot-resize-handle.resizing {
-    background: rgba(0, 112, 242, 0.55) !important;
-    box-shadow: 0 0 10px rgba(0, 112, 242, 0.7) !important;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-    }
-    to {
-        transform: translateX(0);
-    }
+    height: 90vh !important;
 }
 
 /* =========================================================
-   2. Pinned Header
+   2. Pinned Header (Joule Gradient)
    ========================================================= */
 .copilot-header {
     flex-shrink: 0 !important;
     background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #0070f2 100%);
     color: #ffffff;
-    padding: 12px 16px;
+    padding: 12px 18px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    z-index: 20;
-}
-
-.copilot-header .sapMTitle.copilot-title {
-    color: #ffffff !important;
-    font-weight: 600;
-    font-size: 1.15rem;
+    z-index: 30;
 }
 
 .copilot-header-icon {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-.copilot-status-badge .sapMObjStatusText {
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
+.copilot-title.sapMTitle {
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.2px;
 }
 
 .copilot-subtitle {
-    color: #cbd5e1 !important;
-    font-size: 0.82rem;
+    color: #94a3b8 !important;
+    font-size: 0.76rem;
     letter-spacing: 0.2px;
+}
+
+.copilot-status-badge .sapMObjStatusText {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
 }
 
 .copilot-header-actions .sapMBtn {
     color: #ffffff !important;
-    margin-left: 2px !important;
+    margin-left: 4px !important;
     border-radius: 6px !important;
 }
 
 .copilot-header-actions .sapMBtn:hover {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.copilot-newchat-btn {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+}
+
+.copilot-newchat-btn:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
 }
 
 /* =========================================================
-   3. Quick Suggestion Chips Bar
-   ========================================================= */
-.copilot-suggestions-bar {
-    flex-shrink: 0 !important;
-    padding: 10px 14px;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-    z-index: 15;
-}
-
-.copilot-suggestions-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #475569;
-}
-
-.copilot-mini-toggle .sapMBtnCustomText {
-    font-size: 0.75rem !important;
-    color: #64748b !important;
-}
-
-.copilot-chips-wrap {
-    gap: 6px;
-}
-
-.copilot-pill {
-    border-radius: 16px !important;
-    font-size: 0.8rem !important;
-    background-color: #f1f5f9 !important;
-    color: #1e293b !important;
-    border: 1px solid #cbd5e1 !important;
-    transition: all 0.15s ease !important;
-}
-
-.copilot-pill:hover {
-    background-color: #e0f2fe !important;
-    border-color: #38bdf8 !important;
-    color: #0284c7 !important;
-}
-
-/* =========================================================
-   4. Scrollable Chat Area & Message List (Fills Available Space)
+   3. Scrollable Conversation Q&A Canvas
    ========================================================= */
 .copilot-chat-container {
     flex: 1 1 0% !important;
@@ -171,8 +104,8 @@
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    background-color: #f8fafc;
-    padding: 16px 18px 24px 18px !important;
+    padding: 20px 22px 16px 22px !important;
+    background: #f8fafc !important;
     box-sizing: border-box !important;
 }
 
@@ -183,88 +116,163 @@
 
 .copilot-messages-list {
     width: 100%;
-    padding-bottom: 24px !important;
 }
 
-.copilot-message-row {
-    margin-bottom: 22px;
-    display: flex;
+.copilot-turn-wrapper {
     width: 100%;
+    margin-bottom: 22px;
 }
 
-.copilot-user-row {
-    align-items: flex-end;
+/* Meta author & timestamp row */
+.copilot-meta-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
 }
 
-.copilot-bot-row {
-    align-items: flex-start;
-}
-
-.copilot-msg-meta {
-    margin-bottom: 4px;
-}
-
-.copilot-user-meta {
-    justify-content: flex-end;
-}
-
-.copilot-bot-meta {
-    justify-content: flex-start;
-}
-
-.copilot-sender-label {
+.copilot-author-name {
     font-size: 0.82rem;
-    font-weight: 600;
-    color: #475569;
+    font-weight: 700;
+    color: #334155;
 }
 
-.copilot-timestamp-label {
-    font-size: 0.75rem;
+.copilot-meta-time {
+    font-size: 0.72rem;
     color: #94a3b8;
 }
 
-.copilot-avatar {
-    color: #0070f2;
-}
-
-/* Message Bubbles */
-.copilot-bubble {
-    padding: 14px 18px;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    line-height: 1.6;
-    font-size: 0.92rem;
-    word-break: break-word;
-}
-
-.copilot-user-bubble {
-    background: linear-gradient(135deg, #0064d9 0%, #0070f2 100%);
-    color: #ffffff;
-    border-bottom-right-radius: 3px;
-    max-width: 82%;
-    box-shadow: 0 4px 12px rgba(0, 112, 242, 0.25);
-}
-
-.copilot-user-text {
+.copilot-user-avatar {
+    background: #0070f2 !important;
     color: #ffffff !important;
-    font-size: 0.94rem;
+    font-weight: 700 !important;
+    width: 24px !important;
+    height: 24px !important;
 }
 
-.copilot-bot-bubble {
-    background-color: #ffffff;
-    color: #0f172a;
-    border: 1px solid #e2e8f0;
-    border-bottom-left-radius: 3px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
+.copilot-bot-avatar {
+    background: linear-gradient(135deg, #0f172a 0%, #0070f2 100%) !important;
+    color: #ffffff !important;
+    width: 24px !important;
+    height: 24px !important;
 }
 
 /* =========================================================
-   5. Tool Execution Badges
+   4. USER QUESTION TURN (Right-Aligned Bubble)
+   ========================================================= */
+.copilot-user-turn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.copilot-user-bubble {
+    background: linear-gradient(135deg, #0056b3 0%, #0070f2 100%);
+    color: #ffffff;
+    border-radius: 16px 16px 3px 16px;
+    padding: 12px 18px;
+    max-width: 85%;
+    box-shadow: 0 4px 14px rgba(0, 112, 242, 0.22);
+    box-sizing: border-box;
+}
+
+.copilot-user-prompt-text {
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+    word-break: break-word !important;
+}
+
+/* =========================================================
+   5. COPILOT ANSWER TURN (Left-Aligned Card)
+   ========================================================= */
+.copilot-bot-turn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.copilot-bot-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px 16px 16px 16px;
+    padding: 18px 22px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.copilot-bot-html {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #0f172a;
+    word-break: break-word;
+}
+
+.copilot-html-root {
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+}
+
+/* Welcome Onboarding Card */
+.copilot-welcome-card {
+    background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 4px 0;
+}
+
+.copilot-welcome-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 6px;
+}
+
+.copilot-welcome-subtitle {
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.copilot-welcome-prompt-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0284c7;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.copilot-welcome-prompts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.copilot-welcome-prompts li {
+    font-size: 0.88rem;
+    color: #1e293b;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: default;
+}
+
+/* =========================================================
+   6. Tool Execution Badges
    ========================================================= */
 .copilot-tools-bar {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -275,8 +283,8 @@
     align-items: center;
     padding: 3px 10px;
     border-radius: 12px;
-    font-size: 0.78rem;
-    font-weight: 500;
+    font-size: 0.76rem;
+    font-weight: 600;
 }
 
 .copilot-tool-chip.sap-tool {
@@ -293,45 +301,38 @@
 
 .tool-status.status-ok {
     color: #15803d;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .tool-status.status-err {
     color: #b91c1c;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 /* =========================================================
-   6. Formatted Markdown & Content Inside Bot Bubble
+   7. Typography & Content Formatting inside Bot Answers
    ========================================================= */
-.copilot-bot-html {
-    width: 100%;
-}
-
-.copilot-h2,
-.copilot-h3,
-.copilot-h4 {
-    margin-top: 14px;
-    margin-bottom: 8px;
-    color: #0f172a;
-    font-weight: 600;
-}
-
 .copilot-h2 {
-    font-size: 1.25rem;
-    border-bottom: 2px solid #e2e8f0;
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 16px 0 8px 0;
     padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .copilot-h3 {
-    font-size: 1.1rem;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 4px;
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 14px 0 6px 0;
 }
 
 .copilot-h4 {
     font-size: 0.98rem;
-    color: #1e293b;
+    font-weight: 700;
+    color: #334155;
+    margin: 12px 0 4px 0;
 }
 
 .copilot-divider {
@@ -340,93 +341,74 @@
     margin: 16px 0;
 }
 
-.copilot-p-break {
-    height: 10px;
+.copilot-code {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.86rem;
+    border: 1px solid #e2e8f0;
 }
 
-/* Lists */
-.copilot-ol,
-.copilot-ul {
-    margin: 8px 0 12px 20px;
-    padding: 0;
+.copilot-callout-note {
+    background: #f0fdf4;
+    border-left: 3px solid #22c55e;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.86rem;
+    color: #166534;
 }
 
-.copilot-oli,
-.copilot-uli {
+.copilot-ol, .copilot-ul {
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.copilot-oli, .copilot-uli {
     margin-bottom: 6px;
     line-height: 1.55;
 }
 
-.copilot-code {
-    background-color: #f1f5f9;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: Consolas, Monaco, "Courier New", monospace;
-    font-size: 0.86rem;
-    color: #0369a1;
-    border: 1px solid #e2e8f0;
-}
-
-/* Callouts & Error Banners */
-.copilot-callout-note {
-    background: #f0f9ff;
-    border-left: 4px solid #0284c7;
-    padding: 10px 14px;
-    border-radius: 4px;
-    font-size: 0.88rem;
-    color: #0369a1;
-    margin: 12px 0;
-    line-height: 1.5;
-}
-
-.copilot-error-banner {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 0.88rem;
-    line-height: 1.5;
+.copilot-p-break {
+    height: 10px;
 }
 
 /* =========================================================
-   7. Responsive Tables with SAP Fiori Status Badges
+   8. Formatted Data Tables (Fits Data Completely)
    ========================================================= */
 .copilot-table-wrapper {
     width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    margin: 14px 0;
     border-radius: 8px;
     border: 1px solid #cbd5e1;
-    margin: 12px 0;
     background: #ffffff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .copilot-table {
     width: 100%;
-    min-width: 580px;
     border-collapse: collapse;
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     text-align: left;
 }
 
 .copilot-table th {
-    position: sticky;
-    top: 0;
-    background: #f1f5f9;
-    color: #1e293b;
-    font-weight: 600;
-    padding: 10px 12px;
-    border-bottom: 2px solid #cbd5e1;
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-bottom: 1.5px solid #cbd5e1;
     white-space: nowrap;
 }
 
 .copilot-table td {
-    padding: 9px 12px;
-    border-bottom: 1px solid #e2e8f0;
-    color: #334155;
-    white-space: nowrap;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    vertical-align: middle;
 }
 
 .copilot-table tr:last-child td {
@@ -439,14 +421,12 @@
 
 /* Status Badges */
 .copilot-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.74rem;
-    font-weight: 600;
+    display: inline-block;
     padding: 2px 8px;
     border-radius: 12px;
-    line-height: 1.3;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-align: center;
 }
 
 .copilot-badge.badge-delivered {
@@ -480,68 +460,202 @@
 }
 
 /* =========================================================
-   8. Thinking Indicator
+   9. Interactive Deep-Links (Fiori Elements Object Page)
    ========================================================= */
-.copilot-thinking-box {
-    display: flex;
+.copilot-order-link {
+    display: inline-flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+    gap: 4px;
+    color: #0070f2 !important;
+    background-color: #eff6ff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-family: inherit;
+    text-decoration: none;
+    border: 1px solid #bfdbfe;
+    cursor: pointer;
+    transition: all 0.18s ease-in-out;
+    vertical-align: middle;
+}
+
+.copilot-order-link:hover {
+    background-color: #0070f2 !important;
+    color: #ffffff !important;
+    border-color: #0070f2;
+    box-shadow: 0 2px 8px rgba(0, 112, 242, 0.35);
+    text-decoration: none !important;
+    transform: translateY(-1px);
+}
+
+.copilot-order-link:active {
+    transform: translateY(0);
+}
+
+.copilot-order-icon {
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* =========================================================
+   10. Thinking Indicator
+   ========================================================= */
+.copilot-thinking-turn {
+    width: 100%;
+}
+
+.copilot-thinking-bubble {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 3px 16px 16px 16px;
+    padding: 14px 18px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    margin: 12px 0;
 }
 
 .thinking-title {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: #0f172a;
 }
 
 .thinking-subtitle {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: #64748b;
 }
 
 /* =========================================================
-   9. Pinned Bottom Input Toolbar (Always Visible at Bottom)
+   11. ASK NEXT QUESTION CARD (Directly After the Answer)
    ========================================================= */
-.copilot-footer-toolbar {
-    flex-shrink: 0 !important;
-    background-color: #ffffff !important;
-    border-top: 1px solid #cbd5e1 !important;
-    padding: 12px 16px !important;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
-    min-height: 72px !important;
-    height: auto !important;
+.copilot-next-question-card {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 16px 18px 12px 18px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.copilot-next-question-card:focus-within {
+    border-color: #0070f2;
+    box-shadow: 0 4px 20px rgba(0, 112, 242, 0.15);
+}
+
+.copilot-next-q-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.copilot-next-q-hint {
+    font-size: 0.74rem;
+    color: #64748b;
+}
+
+.copilot-inline-suggestions {
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.copilot-inline-chip {
+    border-radius: 14px !important;
+    font-size: 0.76rem !important;
+    background-color: #f1f5f9 !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 2px 10px !important;
+    transition: all 0.15s ease !important;
+}
+
+.copilot-inline-chip:hover {
+    background-color: #e0f2fe !important;
+    border-color: #0284c7 !important;
+    color: #0284c7 !important;
+    transform: translateY(-1px);
+}
+
+.copilot-inline-input-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 6px 10px 6px 14px;
+    box-sizing: border-box;
+    width: 100% !important;
+}
+
+.copilot-inline-input-wrapper:focus-within {
+    border-color: #0070f2;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.12);
+}
+
+.copilot-inline-input-wrapper > .sapMFlexItem:first-child,
+.copilot-inline-input-wrapper > div:first-child,
+.copilot-inline-textarea {
+    flex: 1 1 0% !important;
+    flex-grow: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.copilot-inline-textarea .sapMTextAreaInner,
+.copilot-inline-textarea textarea {
+    font-size: 0.95rem !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 6px 0 !important;
+    line-height: 1.45 !important;
+    box-shadow: none !important;
+    resize: none !important;
+    color: #0f172a !important;
+    width: 100% !important;
     box-sizing: border-box !important;
-    z-index: 30 !important;
 }
 
-.copilot-input-textarea textarea {
+.copilot-inline-textarea textarea:focus {
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.copilot-inline-textarea textarea::placeholder,
+.copilot-inline-textarea .sapMTextAreaPlaceholder {
+    color: #64748b !important;
+    font-style: italic !important;
     font-size: 0.92rem !important;
-    border-radius: 8px !important;
-    padding: 10px 12px !important;
-    border-color: #cbd5e1 !important;
-    line-height: 1.4 !important;
+    opacity: 1 !important;
 }
 
-.copilot-input-textarea textarea:focus {
-    border-color: #0070f2 !important;
-    box-shadow: 0 0 0 1px #0070f2 !important;
-}
-
-.copilot-send-btn {
-    border-radius: 8px !important;
+.copilot-inline-send-btn {
+    flex-shrink: 0 !important;
     min-width: 85px !important;
     height: 38px !important;
+    border-radius: 8px !important;
     font-weight: 600 !important;
+    background: #0070f2 !important;
+    color: #ffffff !important;
+    align-self: flex-end;
+    margin-bottom: 2px;
+}
+
+.copilot-inline-send-btn:hover {
+    background: #0056b3 !important;
+}
+
+.copilot-inline-footer {
+    padding-top: 4px;
+}
+
+.copilot-hint-muted {
+    font-size: 0.72rem;
+    color: #94a3b8;
 }
 
 /* =========================================================
-   10. Floating Copilot FAB
+   12. Floating Copilot Action Button (FAB)
    ========================================================= */
 #jouleCopilotFab {
     position: fixed;
@@ -586,9 +700,11 @@
 
 /* Small screen / Tablet responsiveness */
 @media (max-width: 768px) {
-    .copilot-dialog {
+    .copilot-dialog.sapMDialog {
         width: 100vw !important;
         max-width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
         border-radius: 0 !important;
     }
 }

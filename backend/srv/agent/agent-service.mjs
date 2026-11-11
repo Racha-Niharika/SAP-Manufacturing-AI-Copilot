@@ -101,7 +101,7 @@ async function callGeminiWithRetry(params, maxRetries = 3) {
   }
 }
 
-export async function runManufacturingAgent(question) {
+export async function runManufacturingAgent(question, rawHistory = []) {
 
   if (!question || !question.trim()) {
     throw new Error("Question is required");
@@ -163,7 +163,7 @@ export async function runManufacturingAgent(question) {
       ragDeclaration
     ];
 
-    // 5. Give Gemini the available tools and the user's question.
+    // 5. Give Gemini the available tools, conversation history, and user's question.
     const systemInstruction = `
 You are an intelligent SAP Manufacturing AI Copilot.
 
@@ -182,6 +182,9 @@ Instructions:
 - For questions about manufacturing procedures, use the SOP search tool.
 - For questions involving both live SAP information and recommended actions,
   use both SAP and SOP tools.
+- Conversational Context & Memory:
+  Use previous messages in this conversation to resolve references like "it", "that order", "its status", "the delay", or follow-up questions.
+  When the user asks for more details about an order discussed earlier, refer to its order number and fetch or summarize the relevant facts.
 - Do not invent production-order information.
 - Do not claim that an order is delayed due to a material shortage unless
   the retrieved data establishes that connection.
@@ -197,7 +200,59 @@ Instructions:
 - Do not stop in the middle of a table or sentence.
 `;
 
+    // Parse conversation history if provided
+    let conversationHistory = [];
+    if (typeof rawHistory === "string" && rawHistory.trim()) {
+      try {
+        conversationHistory = JSON.parse(rawHistory);
+      } catch {
+        conversationHistory = [];
+      }
+    } else if (Array.isArray(rawHistory)) {
+      conversationHistory = rawHistory;
+    }
+
+    // Sanitize and format history turns
+    const sanitizedHistory = [];
+    if (Array.isArray(conversationHistory)) {
+      // Keep only up to the last 6 turns (3 complete user/model rounds)
+      const recentTurns = conversationHistory.slice(-6);
+
+      for (const turn of recentTurns) {
+        const role = turn.role === "assistant" || turn.role === "model" ? "model" : (turn.role === "user" ? "user" : null);
+        const text = (turn.content || turn.text || "").trim();
+
+        if (role && text) {
+          // Truncate overly long model messages in history to save tokens and avoid quota spikes
+          const trimmedText = role === "model" && text.length > 800 ? text.slice(0, 800) + "... [truncated]" : text;
+
+          // Avoid consecutive duplicates of the same role
+          if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === role) {
+            sanitizedHistory[sanitizedHistory.length - 1].parts[0].text += `\n${trimmedText}`;
+          } else {
+            sanitizedHistory.push({
+              role,
+              parts: [{ text: trimmedText }]
+            });
+          }
+        }
+      }
+    }
+
+    // Gemini API requires alternating user -> model turns:
+    // 1. History must start with 'user'
+    while (sanitizedHistory.length > 0 && sanitizedHistory[0].role !== "user") {
+      sanitizedHistory.shift();
+    }
+
+    // 2. The turn right before the current question must be 'model'
+    // (since the current question is appended as 'user')
+    while (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role !== "model") {
+      sanitizedHistory.pop();
+    }
+
     let contents = [
+      ...sanitizedHistory,
       {
         role: "user",
         parts: [{ text: question }]

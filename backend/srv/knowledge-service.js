@@ -40,9 +40,9 @@ module.exports = class KnowledgeService extends cds.ApplicationService {
     });
 
     this.on("askAgent", async (req) => {
-      const { question } = req.data;
+      const { question, history } = req.data;
       try {
-        const result = await runManufacturingAgent(question);
+        const result = await runManufacturingAgent(question, history);
         return JSON.stringify(result);
       } catch (error) {
         console.error("Manufacturing Agent Error:", error);

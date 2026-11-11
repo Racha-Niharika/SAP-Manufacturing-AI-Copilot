@@ -1,7 +1,8 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
-    "sap/ui/model/json/JSONModel"
-], function (Controller, JSONModel) {
+    "sap/ui/model/json/JSONModel",
+    "sap/m/MessageToast"
+], function (Controller, JSONModel, MessageToast) {
     "use strict";
 
     var STORAGE_KEY = "sap_manufacturing_copilot_history";
@@ -24,25 +25,82 @@ sap.ui.define([
         onAfterRendering: function () {
             var oInput = this.byId("questionInput");
             if (oInput) {
-                oInput.attachBrowserEvent("keydown", function (e) {
+                var fnOnEnter = function (e) {
                     if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
+                        e.stopPropagation();
                         this.onSendMessage();
                     }
-                }.bind(this));
+                }.bind(this);
+
+                oInput.attachBrowserEvent("keydown", fnOnEnter);
+                var oDomRef = oInput.getDomRef();
+                if (oDomRef) {
+                    var oTextarea = oDomRef.querySelector("textarea") || oDomRef;
+                    oTextarea.addEventListener("keydown", fnOnEnter);
+                }
             }
+
+            // Delegated click handler for Production Order deep links
+            var oScroll = this.byId("chatScroll");
+            if (oScroll) {
+                var oDom = oScroll.getDomRef();
+                if (oDom && !oDom._hasOrderLinkHandler) {
+                    oDom._hasOrderLinkHandler = true;
+                    oDom.addEventListener("click", function (e) {
+                        var oTarget = e.target.closest(".copilot-order-link");
+                        if (oTarget) {
+                            e.preventDefault();
+                            var sOrderNumber = oTarget.getAttribute("data-order-number");
+                            if (sOrderNumber) {
+                                this._navigateToOrder(sOrderNumber);
+                            }
+                        }
+                    }.bind(this));
+                }
+            }
+
             this._scrollToBottom();
         },
 
         onSendMessage: async function () {
             var oModel = this.getView().getModel("chat");
-            var sQuestion = (oModel.getProperty("/currentInput") || "").trim();
+            var oInput = this.byId("questionInput");
+
+            // Extract question from control directly or model
+            var sQuestion = "";
+            if (oInput && typeof oInput.getValue === "function") {
+                sQuestion = oInput.getValue();
+            }
+            if (!sQuestion) {
+                sQuestion = oModel.getProperty("/currentInput") || "";
+            }
+            sQuestion = (sQuestion || "").trim();
 
             if (!sQuestion) {
                 return;
             }
 
+            // Clear input immediately so placeholder appears
+            oModel.setProperty("/currentInput", "");
+            if (oInput && typeof oInput.setValue === "function") {
+                oInput.setValue("");
+            }
+
             var aMessages = (oModel.getProperty("/messages") || []).slice();
+
+            // Build conversation history (up to last 6 meaningful turns) for multi-turn memory
+            var aHistory = aMessages
+                .filter(function (m) {
+                    return m.text && !m.text.startsWith("Error:") && !m.text.startsWith("Hello! I am your SAP");
+                })
+                .slice(-6)
+                .map(function (m) {
+                    return {
+                        role: m.sender === "User" ? "user" : "model",
+                        text: m.text
+                    };
+                });
 
             // 1. Add User message
             aMessages.push({
@@ -60,7 +118,7 @@ sap.ui.define([
             this._persistChat(aMessages);
             this._scrollToBottom();
 
-            // 2. Call backend agent API
+            // 2. Call backend agent API with question & multi-turn history
             try {
                 var response = await fetch("/odata/v4/knowledge/askAgent", {
                     method: "POST",
@@ -68,7 +126,10 @@ sap.ui.define([
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    body: JSON.stringify({ question: sQuestion })
+                    body: JSON.stringify({
+                        question: sQuestion,
+                        history: JSON.stringify(aHistory)
+                    })
                 });
 
                 if (!response.ok) {
@@ -187,6 +248,10 @@ sap.ui.define([
                         scrollable.scrollTop = scrollable.scrollHeight;
                     }
                 }
+                var oInput = this.byId("questionInput");
+                if (oInput && typeof oInput.focus === "function") {
+                    try { oInput.focus(); } catch (e) {}
+                }
             }.bind(this);
 
             setTimeout(fnScroll, 50);
@@ -208,10 +273,24 @@ sap.ui.define([
                 if (sSaved) {
                     var parsed = JSON.parse(sSaved);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        return parsed;
+                        return parsed.map(function (m) {
+                            if (m && m.sender !== "User") {
+                                var sContent = (m.html || m.text || "").trim();
+                                if (!sContent.startsWith("<div")) {
+                                    sContent = "<div class='copilot-html-root'>" + sContent + "</div>";
+                                }
+                                m.html = sContent;
+                            }
+                            return m;
+                        });
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn("Could not parse saved chat, resetting:", e);
+                try {
+                    sessionStorage.removeItem(STORAGE_KEY);
+                } catch (ex) {}
+            }
             return [this._getWelcomeMessage()];
         },
 
@@ -219,8 +298,18 @@ sap.ui.define([
             return {
                 sender: "Manufacturing AI Copilot",
                 timestamp: this._getTimeString(),
-                text: "Hello! I am your SAP Manufacturing AI Copilot. I have live access to S/4HANA production orders and the company's Standard Operating Procedures (SOPs). You can ask me to analyze live order status, check for delays, or look up plant procedures.",
-                html: "<p>Hello! I am your <strong>SAP Manufacturing AI Copilot</strong>.<br/><br/>I have live access to <strong>S/4HANA production orders</strong> and the company's <strong>Standard Operating Procedures (SOPs)</strong>.<br/><br/>You can ask me to analyze live order status, check for delays, or look up plant procedures.</p>",
+                text: "Hello! I am your SAP Manufacturing AI Copilot. How can I assist you with production orders or standard operating procedures today?",
+                html: "<div class='copilot-welcome-card'>" +
+                    "<div class='copilot-welcome-title'>👋 Hello! I am your SAP Manufacturing AI Copilot</div>" +
+                    "<div class='copilot-welcome-subtitle'>I have live access to <strong>SAP S/4HANA production orders</strong> and <strong>manufacturing SOP documents</strong> via Vector AI.</div>" +
+                    "<div class='copilot-welcome-prompt-label'>💡 Example questions you can ask:</div>" +
+                    "<ul class='copilot-welcome-prompts'>" +
+                    "<li>🔍 <em>\"Get details of order 1000001\"</em></li>" +
+                    "<li>⚠️ <em>\"Which production orders are delayed?\"</em></li>" +
+                    "<li>📋 <em>\"What is the SOP for material shortages?\"</em></li>" +
+                    "<li>🔧 <em>\"How do I handle an emergency machine breakdown?\"</em></li>" +
+                    "</ul>" +
+                    "</div>",
                 tools: []
             };
         },
@@ -234,7 +323,7 @@ sap.ui.define([
         },
 
         _formatMarkdown: function (markdown) {
-            if (!markdown) return "";
+            if (!markdown) return "<div class='copilot-html-root'></div>";
 
             // 1. Escape HTML
             var html = this._escapeHtml(markdown);
@@ -308,7 +397,10 @@ sap.ui.define([
             html = html.replace(/\n\n+/g, "<div class='copilot-p-break'></div>");
             html = html.replace(/\n/g, "<br/>");
 
-            return html;
+            // 11. Format SAP Production Order numbers as clickable deep-links
+            html = this._formatOrderLinks(html);
+
+            return "<div class='copilot-html-root'>" + html + "</div>";
         },
 
         _formatBadges: function (cellText) {
@@ -328,6 +420,71 @@ sap.ui.define([
                 return "<span class='copilot-badge badge-delayed'>Delayed</span>";
             }
             return cellText;
+        },
+
+        _formatOrderLinks: function (text) {
+            if (!text) return "";
+            // Replace 7-digit order numbers starting with 10 (e.g. 1000001) that are not already within an HTML tag or attribute
+            return text.replace(/(?<![0-9a-zA-Z_=\/"])(10\d{5})\b(?![^<]*>)(?![^<]*<\/a>)/g, function (match, sOrder) {
+                return "<a href='javascript:void(0)' class='copilot-order-link' data-order-number='" + sOrder + "' title='Open Production Order " + sOrder + " in Fiori Elements'><span class='copilot-order-icon'>📋</span> " + sOrder + "</a>";
+            });
+        },
+
+        _navigateToOrder: async function (sOrderNumber) {
+            try {
+                // 1. Fetch entity ID from production orders service
+                var response = await fetch("/production/ProductionOrders?$filter=orderNumber eq '" + encodeURIComponent(sOrderNumber) + "'&$select=ID");
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                var data = await response.json();
+                var aItems = data.value || [];
+                if (aItems.length === 0 || !aItems[0].ID) {
+                    MessageToast.show("Production Order " + sOrderNumber + " not found in S/4HANA records.");
+                    return;
+                }
+
+                var sId = aItems[0].ID;
+
+                // 2. If dialog is maximized, restore to standard sidebar mode so the Object Page is clearly visible
+                var oModel = this.getView().getModel("chat");
+                if (oModel && oModel.getProperty("/isMaximized")) {
+                    this.onToggleMaximize();
+                }
+
+                MessageToast.show("Opening Production Order " + sOrderNumber + " in Fiori...");
+
+                // 3. Navigate via UI5 Router or Launchpad Hash
+                var oComponent = this.getOwnerComponent();
+                if (!oComponent && sap.ui.core.Component && sap.ui.core.Component.registry) {
+                    oComponent = Array.from(sap.ui.core.Component.registry.filter(function (c) {
+                        return c.getMetadata && c.getMetadata().getName() === "manufacturingui.Component";
+                    }))[0];
+                }
+
+                var bNavigated = false;
+                if (oComponent && typeof oComponent.getRouter === "function") {
+                    var oRouter = oComponent.getRouter();
+                    if (oRouter) {
+                        try {
+                            oRouter.navTo("ProductionOrdersObjectPage", {
+                                key: "ID=" + sId
+                            });
+                            bNavigated = true;
+                        } catch (routerErr) {
+                            console.warn("Router navTo failed, using hash navigation:", routerErr);
+                        }
+                    }
+                }
+
+                if (!bNavigated) {
+                    window.location.hash = "#manufacturingui-display&/ProductionOrders(" + encodeURIComponent("ID=" + sId) + ")";
+                }
+
+            } catch (err) {
+                console.error("Failed to navigate to order:", err);
+                MessageToast.show("Unable to navigate to Production Order " + sOrderNumber);
+            }
         }
     });
 });

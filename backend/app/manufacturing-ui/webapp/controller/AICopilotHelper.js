@@ -20,75 +20,43 @@ sap.ui.define([
         }
     }
 
-    function attachResizeHandle(dialog) {
-        var dom = dialog.getDomRef();
-        if (!dom || dom.querySelector(".copilot-resize-handle")) {
-            return;
-        }
-
-        var handle = document.createElement("div");
-        handle.className = "copilot-resize-handle";
-        handle.title = "Drag left/right to resize panel width";
-        dom.appendChild(handle);
-
-        var isResizing = false;
-
-        handle.addEventListener("mousedown", function (e) {
-            isResizing = true;
-            handle.classList.add("resizing");
-            document.body.style.cursor = "ew-resize";
-            document.body.style.userSelect = "none";
-            e.preventDefault();
-        });
-
-        window.addEventListener("mousemove", function (e) {
-            if (!isResizing) return;
-            var newWidth = window.innerWidth - e.clientX;
-            if (newWidth < 460) newWidth = 460;
-            if (newWidth > window.innerWidth - 60) newWidth = window.innerWidth - 60;
-            dom.style.setProperty("width", newWidth + "px", "important");
-        });
-
-        window.addEventListener("mouseup", function () {
-            if (isResizing) {
-                isResizing = false;
-                handle.classList.remove("resizing");
-                document.body.style.cursor = "";
-                document.body.style.userSelect = "";
-            }
-        });
-    }
-
     return {
         openCopilotDialog: function () {
             hideFab();
 
             if (oDialog) {
                 oDialog.open();
-                setTimeout(function () {
-                    attachResizeHandle(oDialog);
-                }, 100);
                 return;
             }
 
-            XMLView.create({
-                viewName: "manufacturingui.view.AICopilot"
-            }).then(function (oView) {
+            var oComponent = null;
+            if (sap.ui.core.Component && sap.ui.core.Component.registry) {
+                oComponent = Array.from(sap.ui.core.Component.registry.filter(function (c) {
+                    return c.getMetadata().getName() === "manufacturingui.Component";
+                }))[0];
+            }
+
+            var fnCreateView = function () {
+                return XMLView.create({
+                    viewName: "manufacturingui.view.AICopilot"
+                });
+            };
+
+            var pView = oComponent ? oComponent.runAsOwner(fnCreateView) : fnCreateView();
+
+            pView.then(function (oView) {
                 oDialog = new Dialog({
                     title: "SAP Manufacturing AI Copilot",
-                    contentWidth: "620px",
-                    contentHeight: "100%",
+                    contentWidth: "760px",
+                    contentHeight: "82vh",
                     horizontalPadding: false,
                     verticalPadding: false,
-                    showHeader: false, // View contains its own custom header and footer
-                    verticalScrolling: false,   // Allow internal ScrollContainer to scroll
-                    horizontalScrolling: false, // Prevent outer scroll clipping
+                    showHeader: false, // Custom header provided in View
+                    verticalScrolling: false, // Internal ScrollContainer handles scrolling
+                    horizontalScrolling: false,
                     content: [oView],
                     beforeOpen: function () {
                         hideFab();
-                    },
-                    afterOpen: function () {
-                        attachResizeHandle(oDialog);
                     },
                     afterClose: function () {
                         showFab();
@@ -100,6 +68,38 @@ sap.ui.define([
             }).catch(function (err) {
                 showFab();
                 console.error("Error creating AI Copilot View:", err);
+
+                // Self-healing: if session storage has invalid markup, clear it and retry view creation
+                try {
+                    sessionStorage.removeItem("sap_manufacturing_copilot_history");
+                } catch (e) {}
+
+                XMLView.create({
+                    viewName: "manufacturingui.view.AICopilot"
+                }).then(function (oCleanView) {
+                    oDialog = new Dialog({
+                        title: "SAP Manufacturing AI Copilot",
+                        contentWidth: "760px",
+                        contentHeight: "82vh",
+                        horizontalPadding: false,
+                        verticalPadding: false,
+                        showHeader: false,
+                        verticalScrolling: false,
+                        horizontalScrolling: false,
+                        content: [oCleanView],
+                        beforeOpen: function () {
+                            hideFab();
+                        },
+                        afterClose: function () {
+                            showFab();
+                        }
+                    });
+
+                    oDialog.addStyleClass("copilot-dialog");
+                    oDialog.open();
+                }).catch(function (retryErr) {
+                    console.error("Self-healing retry failed:", retryErr);
+                });
             });
         }
     };
