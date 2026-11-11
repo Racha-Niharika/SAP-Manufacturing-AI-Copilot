@@ -41,6 +41,29 @@ sap.ui.define([
                 }
             }
 
+            // Clicking input wrapper automatically focuses the textarea cursor
+            var oViewDom = this.getView().getDomRef();
+            if (oViewDom) {
+                var oInputWrapper = oViewDom.querySelector(".copilot-inline-input-wrapper");
+                if (oInputWrapper && !oInputWrapper._hasClickFocus) {
+                    oInputWrapper._hasClickFocus = true;
+                    oInputWrapper.addEventListener("click", function () {
+                        this._focusInput();
+                    }.bind(this));
+                }
+            }
+
+            // Focus input immediately so cursor is visible initially
+            setTimeout(function () {
+                this._focusInput();
+            }.bind(this), 80);
+            setTimeout(function () {
+                this._focusInput();
+            }.bind(this), 250);
+            setTimeout(function () {
+                this._focusInput();
+            }.bind(this), 500);
+
             // Delegated click handler for Production Order deep links
             var oScroll = this.byId("chatScroll");
             if (oScroll) {
@@ -61,6 +84,18 @@ sap.ui.define([
             }
 
             this._scrollToBottom();
+        },
+
+        _focusInput: function () {
+            var oInput = this.byId("questionInput");
+            if (oInput) {
+                var oDom = oInput.getFocusDomRef() || (oInput.getDomRef() ? oInput.getDomRef().querySelector("textarea") : null);
+                if (oDom && typeof oDom.focus === "function") {
+                    try {
+                        oDom.focus();
+                    } catch (e) {}
+                }
+            }
         },
 
         onSendMessage: async function () {
@@ -248,10 +283,7 @@ sap.ui.define([
                         scrollable.scrollTop = scrollable.scrollHeight;
                     }
                 }
-                var oInput = this.byId("questionInput");
-                if (oInput && typeof oInput.focus === "function") {
-                    try { oInput.focus(); } catch (e) {}
-                }
+                this._focusInput();
             }.bind(this);
 
             setTimeout(fnScroll, 50);

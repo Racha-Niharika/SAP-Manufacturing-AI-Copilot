@@ -20,12 +20,31 @@ sap.ui.define([
         }
     }
 
+    function focusInput(oView) {
+        if (!oView) return;
+        var oInput = oView.byId("questionInput");
+        if (oInput) {
+            var oDom = oInput.getFocusDomRef() || (oInput.getDomRef() ? oInput.getDomRef().querySelector("textarea") : null);
+            if (oDom && typeof oDom.focus === "function") {
+                oDom.focus();
+            }
+        }
+    }
+
     return {
         openCopilotDialog: function () {
             hideFab();
 
             if (oDialog) {
                 oDialog.open();
+                setTimeout(function () {
+                    var oView = oDialog.getContent() && oDialog.getContent()[0];
+                    focusInput(oView);
+                }, 100);
+                setTimeout(function () {
+                    var oView = oDialog.getContent() && oDialog.getContent()[0];
+                    focusInput(oView);
+                }, 300);
                 return;
             }
 
@@ -57,6 +76,14 @@ sap.ui.define([
                     content: [oView],
                     beforeOpen: function () {
                         hideFab();
+                    },
+                    afterOpen: function () {
+                        setTimeout(function () {
+                            focusInput(oView);
+                        }, 100);
+                        setTimeout(function () {
+                            focusInput(oView);
+                        }, 300);
                     },
                     afterClose: function () {
                         showFab();

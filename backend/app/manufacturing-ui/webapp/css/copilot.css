@@ -73,26 +73,75 @@
     font-weight: 600 !important;
 }
 
-.copilot-header-actions .sapMBtn {
-    color: #ffffff !important;
-    margin-left: 4px !important;
-    border-radius: 6px !important;
+.copilot-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
-.copilot-header-actions .sapMBtn:hover {
-    background-color: rgba(255, 255, 255, 0.18) !important;
-}
-
+/* High-contrast solid "+ New Chat" Button */
 .copilot-newchat-btn {
-    background: rgba(255, 255, 255, 0.15) !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    background: #ffffff !important;
+    border: 1.5px solid #ffffff !important;
     border-radius: 8px !important;
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+    height: 32px !important;
+    padding: 0 10px !important;
+}
+
+.copilot-newchat-btn .sapMBtnInner,
+.copilot-newchat-btn .sapMBtnContent,
+.copilot-newchat-btn .sapMBtnIcon,
+.copilot-newchat-btn bdi {
+    color: #0070f2 !important;
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
 }
 
 .copilot-newchat-btn:hover {
-    background: rgba(255, 255, 255, 0.28) !important;
+    background: #e0f2fe !important;
+    border-color: #e0f2fe !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.copilot-newchat-btn:hover .sapMBtnContent,
+.copilot-newchat-btn:hover .sapMBtnIcon,
+.copilot-newchat-btn:hover bdi {
+    color: #0056b3 !important;
+}
+
+/* High-contrast Maximize & Close Action Buttons */
+.copilot-header-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 8px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.copilot-header-btn .sapMBtnInner,
+.copilot-header-btn .sapMBtnIcon {
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.copilot-header-btn:hover {
+    background: rgba(255, 255, 255, 0.38) !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3) !important;
+    transform: scale(1.05);
+}
+
+.copilot-header-btn:hover .sapMBtnIcon {
+    color: #ffffff !important;
 }
 
 /* =========================================================
@@ -585,6 +634,7 @@
     padding: 6px 10px 6px 14px;
     box-sizing: border-box;
     width: 100% !important;
+    cursor: text !important;
 }
 
 .copilot-inline-input-wrapper:focus-within {
@@ -600,20 +650,25 @@
     flex-grow: 1 !important;
     width: 100% !important;
     min-width: 0 !important;
+    cursor: text !important;
 }
 
 .copilot-inline-textarea .sapMTextAreaInner,
 .copilot-inline-textarea textarea {
-    font-size: 0.95rem !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
     border: none !important;
     background: transparent !important;
-    padding: 6px 0 !important;
-    line-height: 1.45 !important;
+    padding: 6px 4px !important;
+    line-height: 1.5 !important;
     box-shadow: none !important;
     resize: none !important;
     color: #0f172a !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    caret-color: #000000 !important; /* Bold Jet Black for maximum 21:1 contrast */
+    caret-shape: block !important;    /* Expanded block cursor width in modern browsers */
+    cursor: text !important;
 }
 
 .copilot-inline-textarea textarea:focus {
@@ -623,10 +678,15 @@
 
 .copilot-inline-textarea textarea::placeholder,
 .copilot-inline-textarea .sapMTextAreaPlaceholder {
-    color: #64748b !important;
+    color: #94a3b8 !important;
     font-style: italic !important;
     font-size: 0.92rem !important;
-    opacity: 1 !important;
+    opacity: 0.75 !important;
+    padding-left: 3px !important;
+}
+
+.copilot-inline-textarea textarea:focus::placeholder {
+    opacity: 0.45 !important;
 }
 
 .copilot-inline-send-btn {
