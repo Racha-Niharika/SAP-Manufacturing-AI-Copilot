@@ -20,6 +20,15 @@ annotate ProductionService.ProductionOrders with @(
       status,
       plant
     ],
+    PresentationVariant: {
+      SortOrder: [
+        {
+          Property: orderNumber,
+          Descending: false
+        }
+      ],
+      Visualizations: ['@UI.LineItem']
+    },
     LineItem: [
       { Value: orderNumber, Label: 'Production Order' },
       { Value: material, Label: 'Material' },
