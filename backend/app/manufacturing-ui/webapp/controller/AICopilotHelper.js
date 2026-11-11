@@ -26,7 +26,11 @@ sap.ui.define([
         if (oInput) {
             var oDom = oInput.getFocusDomRef() || (oInput.getDomRef() ? oInput.getDomRef().querySelector("textarea") : null);
             if (oDom && typeof oDom.focus === "function") {
-                oDom.focus();
+                try {
+                    oDom.focus({ preventScroll: true });
+                } catch (e) {
+                    oDom.focus();
+                }
             }
         }
     }

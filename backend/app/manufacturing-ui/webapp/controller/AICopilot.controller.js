@@ -92,8 +92,10 @@ sap.ui.define([
                 var oDom = oInput.getFocusDomRef() || (oInput.getDomRef() ? oInput.getDomRef().querySelector("textarea") : null);
                 if (oDom && typeof oDom.focus === "function") {
                     try {
-                        oDom.focus();
-                    } catch (e) {}
+                        oDom.focus({ preventScroll: true });
+                    } catch (e) {
+                        try { oDom.focus(); } catch (err) {}
+                    }
                 }
             }
         },
@@ -284,6 +286,15 @@ sap.ui.define([
                         var scrollable = dom.querySelector(".sapMScrollContScroll") || dom;
                         scrollable.scrollTop = scrollable.scrollHeight;
                     }
+                }
+                // Keep pinned top header bar visible by resetting any ancestor scroll offset
+                var oViewDom = this.getView().getDomRef();
+                if (oViewDom) {
+                    oViewDom.scrollTop = 0;
+                    var oMainVbox = oViewDom.querySelector(".copilot-main-vbox");
+                    if (oMainVbox) oMainVbox.scrollTop = 0;
+                    var oDlgCont = oViewDom.closest(".sapMDialogScrollCont");
+                    if (oDlgCont) oDlgCont.scrollTop = 0;
                 }
                 this._focusInput();
             }.bind(this);

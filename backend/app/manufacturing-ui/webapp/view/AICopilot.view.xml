@@ -48,7 +48,10 @@
         </HBox>
 
         <!-- Scrollable Conversation / Q&A Canvas (Fits data completely) -->
-        <ScrollContainer id="chatScroll" vertical="true" horizontal="false" class="copilot-chat-container">
+        <ScrollContainer id="chatScroll" height="100%" vertical="true" horizontal="false" class="copilot-chat-container">
+            <layoutData>
+                <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0%" />
+            </layoutData>
 
             <!-- Conversation Messages List -->
             <VBox id="chatMessagesBox" items="{chat>/messages}" class="copilot-messages-list">
